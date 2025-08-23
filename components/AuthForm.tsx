@@ -1,5 +1,5 @@
 "use client";
-
+import { auth } from '@/firebase/client';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -12,6 +12,9 @@ import Image from "next/image";
 import { log } from "console";
 import FormField from "./FormField";
 import { useRouter } from "next/navigation";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { signIn, signUp } from '@/lib/actions/auth.action';
+
 
 const authFormSchema = (type: FormType) => {
     return z.object({
@@ -33,14 +36,46 @@ export default function AuthForm({ type }: { type: FormType }) {
         },
     });
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
             if (type === 'sign-up') {
+                const { name, email, password } = values;
+
+                const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
+
+                const result = await signUp({
+                    uid: userCredentials.user.uid,
+                    name: name!,
+                    email,
+                    password
+
+                })
+                if (!result?.success) {
+                    toast.error(result?.message);
+                    return;
+                }
                 toast.success('Account created successfully.Please sign in.');
                 router.push('/sign-in')
             } else {
+                const { email, password } = values;
+
+                const userCredentials = await signInWithEmailAndPassword(auth, email, password);
+                const idToken = await userCredentials.user.getIdToken();
+
+                if (!idToken) {
+                    toast.error('Sign in failed');
+                    return;
+                }
+                const result = await signIn({
+                    email, idToken
+                })
+                if (!result?.success) {
+                    toast.error(result?.message);
+                    return;
+                }
                 toast.success('Sign in succesfully');
-                router.push('/');
+                window.location.href = '/';
+
             }
 
         } catch (error) {
