@@ -267,25 +267,36 @@ const Agent = ({
     //     }
     //   }, [messages, callStatus, feedbackId, interviewId, router, type, userId]);
 
-    useEffect(()=>{
-        if(callStatus===CallStatus.FINISHED)router.push('/');
+    useEffect(() => {
+        if (callStatus === CallStatus.FINISHED) router.push('/');
 
-    },[messages,callStatus,type,userId])
+    }, [messages, callStatus, type, userId])
 
     const handleCall = async () => {
-        try {
-            setCallStatus(CallStatus.CONNECTING);
-            await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
+        setCallStatus(CallStatus.CONNECTING);
+        if (type === 'generate') {
+            await vapi.start(undefined, undefined, undefined, process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
                 variableValues: {
                     username: userName,
                     userid: userId,
+                }
+            });
+
+        }
+        else {
+            let formattedQuestions = "";
+            if (questions) {
+                formattedQuestions = formattedQuestions.localeCompare((question) => `-${question}`).join("\n");
+            }
+
+            await vapi.start(interviewer, {
+                variableValues: {
+                    questions: formattedQuestions,
                 },
             });
-        } catch (error) {
-            console.error("Error starting call:", error);
-            setCallStatus(CallStatus.FINISHED);
         }
-    };
+        ;
+    }
 
 
     const handleDisconnect = () => {
@@ -293,8 +304,8 @@ const Agent = ({
         vapi.stop();
     };
 
-    const latestMessage=messages[messages.length-1]?.content;
-    const isCallInactiveOrFinished=callStatus===CallStatus.INACTIVE || callStatus===CallStatus.FINISHED;
+    const latestMessage = messages[messages.length - 1]?.content;
+    const isCallInactiveOrFinished = callStatus === CallStatus.INACTIVE || callStatus === CallStatus.FINISHED;
     return (
         <>
             <div className="call-view">
@@ -355,7 +366,7 @@ const Agent = ({
                         />
 
                         <span className="relative">
-                           {isCallInactiveOrFinished?'Call':".  .   ."}
+                            {isCallInactiveOrFinished ? 'Call' : ".  .   ."}
                         </span>
                     </button>
                 ) : (
