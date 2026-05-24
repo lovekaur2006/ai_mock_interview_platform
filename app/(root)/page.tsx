@@ -1,12 +1,16 @@
-import InterviewCard from '@/components/InterviewCard'
-import { Button } from '@/components/ui/button'
-import { dummyInterviews } from '@/constants'
-import { getCurrentUser, getInterviewsByUserId, getLatestInterviews } from '@/lib/actions/auth.action'
-import Image from 'next/image'
-import Link from 'next/link'
-import React from 'react'
+import Link from "next/link";
+import Image from "next/image";
 
-async function page() {
+import { Button } from "@/components/ui/button";
+import InterviewCard from "@/components/InterviewCard";
+
+import { getCurrentUser } from "@/lib/actions/auth.action";
+import {
+  getInterviewsByUserId,
+  getLatestInterviews,
+} from "@/lib/actions/general.action";
+
+async function Home() {
   const user = await getCurrentUser();
 
   const [userInterviews, allInterview] = await Promise.all([
@@ -16,6 +20,7 @@ async function page() {
 
   const hasPastInterviews = userInterviews?.length! > 0;
   const hasUpcomingInterviews = allInterview?.length! > 0;
+
   return (
     <>
       <section className="card-cta">
@@ -83,7 +88,7 @@ async function page() {
         </div>
       </section>
     </>
-  )
+  );
 }
 
-export default page
+export default Home;
