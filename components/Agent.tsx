@@ -19,10 +19,10 @@ interface SavedMessage {
 const Agent = ({
     userName,
     userId,
-    interviewId,
-    feedbackId,
+    // interviewId,
+    // feedbackId,
     type,
-    questions,
+    // questions,
 }: AgentProps) => {
     const router = useRouter();
     const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
@@ -36,18 +36,18 @@ const Agent = ({
         const onCallEnd = () => {
             setCallStatus(CallStatus.FINISHED);
         };
-        const onMessage = (message: Message) => {
+        const onMessage = (message: any) => {
             if (message.type === "transcript" && message.transcriptType === "final") {
                 const newMessage = { role: message.role, content: message.transcript };
                 setMessages((prev) => [...prev, newMessage]);
             }
         };
         const onSpeechStart = () => {
-            console.log("speech start");
+            // console.log("speech start");
             setIsSpeaking(true);
         };
         const onSpeechEnd = () => {
-            console.log("speech end");
+            // console.log("speech end");
             setIsSpeaking(false);
         };
         const onError = (error: Error) => {
@@ -69,32 +69,34 @@ const Agent = ({
         };
     }, []);
     useEffect(() => {
-        if (messages.length > 0) {
-            setLastMessage(messages[messages.length - 1].content);
-        }
-        const handleGenerateFeedback = async (messages: SavedMessage[]) => {
-            console.log("handleGenerateFeedback");
-            const { success, feedbackId: id } = await createFeedback({
-                interviewId: interviewId!,
-                userId: userId!,
-                transcript: messages,
-                feedbackId,
-            });
-            if (success && id) {
-                router.push(`/interview/${interviewId}/feedback`);
-            } else {
-                console.log("Error saving feedback");
-                router.push("/");
-            }
-        };
+        // if (messages.length > 0) {
+        //     setLastMessage(messages[messages.length - 1].content);
+        // }
+        // const handleGenerateFeedback = async (messages: SavedMessage[]) => {
+        //     console.log("handleGenerateFeedback");
+        //     const { success, feedbackId: id } = await createFeedback({
+        //         interviewId: interviewId!,
+        //         userId: userId!,
+        //         transcript: messages,
+        //         feedbackId,
+        //     });
+        //     if (success && id) {
+        //         router.push(`/interview/${interviewId}/feedback`);
+        //     } else {
+        //         console.log("Error saving feedback");
+        //         router.push("/");
+        //     }
+        // };
         if (callStatus === CallStatus.FINISHED) {
-            if (type === "generate") {
-                router.push("/");
-            } else {
-                handleGenerateFeedback(messages);
-            }
+            // if (type === "generate") {
+            router.push("/");
+            // } else {
+            //     handleGenerateFeedback(messages);
+            // }
         }
-    }, [messages, callStatus, feedbackId, interviewId, router, type, userId]);
+    }, [messages, callStatus,
+        // feedbackId, interviewId, router,
+        type, userId]);
     const handleCall = async () => {
         setCallStatus(CallStatus.CONNECTING);
 
@@ -111,25 +113,31 @@ const Agent = ({
                     },
                 }
             );
-        } else {
-            let formattedQuestions = "";
-            if (questions) {
-                formattedQuestions = questions
-                    .map((question) => `- ${question}`)
-                    .join("\n");
-            }
-
-            await vapi.start(interviewer, {
-                variableValues: {
-                    questions: formattedQuestions,
-                },
-            });
         }
-    };
+    }
+    // } else {
+    //     let formattedQuestions = "";
+    //     if (questions) {
+    //         formattedQuestions = questions
+    //             .map((question) => `- ${question}`)
+    //             .join("\n");
+    //     }
+
+    //     await vapi.start(interviewer, {
+    //         variableValues: {
+    //             questions: formattedQuestions,
+    //         },
+    //     });
+    // }
+    // };
     const handleDisconnect = () => {
         setCallStatus(CallStatus.FINISHED);
         vapi.stop();
     };
+
+    const latestMessage = messages[messages.length - 1]?.content;
+
+    const isCallInactiveOrFinished = callStatus === CallStatus.INACTIVE || callStatus === CallStatus.FINISHED;
     return (
         <>
             <div className="call-view">
@@ -166,13 +174,13 @@ const Agent = ({
                 <div className="transcript-border">
                     <div className="transcript">
                         <p
-                            key={lastMessage}
+                            key={latestMessage}
                             className={cn(
                                 "transition-opacity duration-500 opacity-0",
                                 "animate-fadeIn opacity-100"
                             )}
                         >
-                            {lastMessage}
+                            {latestMessage}
                         </p>
                     </div>
                 </div>
@@ -187,9 +195,7 @@ const Agent = ({
                             )}
                         />
                         <span className="relative">
-                            {callStatus === "INACTIVE" || callStatus === "FINISHED"
-                                ? "Call"
-                                : ". . ."}
+                            {isCallInactiveOrFinished ? 'Call' : '....'}
                         </span>
                     </button>
                 ) : (
